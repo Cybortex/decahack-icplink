@@ -3,6 +3,7 @@ import { AuthNavItems, NavItems } from '../data/data';
 import { FaBars, FaMixer } from 'react-icons/fa6';
 import { useWallet } from './WalletContext';
 import { useNavigate } from 'react-router-dom';
+import ConnectWallet from './ConnectWallet';
 
 const Navbar = () => {
   const [toggle, setToggle] = useState(false);
@@ -106,7 +107,7 @@ const Navbar = () => {
         </div>
       </nav>
 
-      {/* Connect Wallet / Wallet Connected Button */}
+      {/* Connect Wallet / Wallet Connected Button 
       <div onClick={handleWalletConnect}>
         {walletConnected ? (
           <a href='/sign-out'>
@@ -117,7 +118,9 @@ const Navbar = () => {
             <button className="btn btn-secondary">Connect Wallet</button>
           </a>
         )}
-      </div>
+      </div>*/}
+      <ConnectWallet/>
+
 
 
     </div>

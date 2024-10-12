@@ -1,4 +1,3 @@
-// src/components/ConnectWallet.jsx
 import React, { useState, useEffect } from 'react';
 import { FaWallet, FaCheckCircle, FaTimesCircle } from 'react-icons/fa';
 
@@ -10,20 +9,19 @@ const ConnectWallet = () => {
 
   // Check if Plug is installed and auto-connect if possible
   useEffect(() => {
-    if (window.ic && window.ic.plug) {
-      // Optional: Auto-connect logic
-      // Uncomment the following lines if you want to auto-connect on load
-      /*
-      window.ic.plug.requestConnect({ whitelist: [] })
-        .then(() => window.ic.plug.getPrincipal())
-        .then(principalId => {
-          setPrincipal(principalId.toText());
-          setWalletConnected(true);
-        })
-        .catch(err => {
-          console.error('Auto-connect failed:', err);
-        });
-      */
+    const savedWalletConnection = localStorage.getItem('walletConnected');
+    if (window.ic && window.ic.plug && savedWalletConnection === 'true') {
+      // Attempt to auto-reconnect
+      window.ic.plug.isConnected().then((isConnected) => {
+        if (isConnected) {
+          window.ic.plug.getPrincipal().then((principalId) => {
+            setPrincipal(principalId.toText());
+            setWalletConnected(true);
+          });
+        }
+      }).catch((err) => {
+        console.error('Auto-reconnect failed:', err);
+      });
     }
   }, []);
 
@@ -31,11 +29,12 @@ const ConnectWallet = () => {
     if (window.ic && window.ic.plug) {
       try {
         // Request connection to Plug Wallet
-        await window.ic.plug.requestConnect({ whitelist: [] }); // Add canisters if needed
+        await window.ic.plug.requestConnect({ whitelist: [] });
         const principalId = await window.ic.plug.getPrincipal();
         setPrincipal(principalId.toText());
         setWalletConnected(true);
         setError('');
+        localStorage.setItem('walletConnected', 'true'); // Persist state
       } catch (err) {
         console.error('Connection failed:', err);
         setError('Failed to connect wallet. Please try again.');
@@ -52,12 +51,19 @@ const ConnectWallet = () => {
       window.ic.plug.disconnect();
       setWalletConnected(false);
       setPrincipal('');
+      localStorage.removeItem('walletConnected'); // Remove persisted state
     }
   };
 
   const handleCloseError = () => {
     setShowError(false);
     setError('');
+  };
+
+  // Function to shorten the wallet address
+  const shortenPrincipal = (principal) => {
+    if (!principal) return '';
+    return `${principal.slice(0, 5)}...${principal.slice(-5)}`;
   };
 
   return (
@@ -72,9 +78,17 @@ const ConnectWallet = () => {
           <span>Connect Wallet</span>
         </button>
       ) : (
-        <div className="flex items-center space-x-2 bg-green-100 text-green-800 px-4 py-2 rounded-full">
+        <div className="relative flex items-center space-x-2 bg-green-100 text-green-800 px-4 py-2 rounded-full">
           <FaCheckCircle className="w-5 h-5" />
-          <span>Connected: {principal}</span>
+          
+          {/* Shortened Principal ID with Tooltip */}
+          <span className="relative group">
+            {shortenPrincipal(principal)}
+            <span className="absolute z-10 invisible group-hover:visible bg-gray-700 text-white text-xs rounded-lg p-2 mt-1">
+              {principal}
+            </span>
+          </span>
+
           <button
             onClick={disconnectWallet}
             className="btn btn-sm btn-outline btn-error ml-2"
